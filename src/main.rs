@@ -1,80 +1,97 @@
-// https://stackoverflow.com/questions/33626480/raspberry-pi-gpio-pull-up-down-resistors-with-sysfs
-
 extern crate sysfs_gpio;
+#[macro_use]
+extern crate jsonrpc_client_core;
+extern crate jsonrpc_client_http;
 
-use std::{thread, time};
+use std::thread;
 use sysfs_gpio::{Direction, Edge, Pin};
+use jsonrpc_client_http::HttpTransport;
 
-fn interrupt(pin: u64, button: String) -> sysfs_gpio::Result<()> {
-    //let eighty_millis = time::Duration::from_millis(100);
+// json-rpc client
+jsonrpc_client!(pub struct PeachMenuClient {
+    // send button code to peach-menu
+    pub fn press(&mut self, button_code: u8) -> RpcRequest<String>;
+});
+
+fn interrupt(pin: u64, button_code: u8) -> sysfs_gpio::Result<()> {
     let input = Pin::new(pin);
+    let transport = HttpTransport::new().standalone().unwrap();
+    let transport_handle = transport.handle("http://127.0.0.1:3031/").unwrap();
+    let mut client = PeachMenuClient::new(transport_handle);
     input.with_exported(|| {
-        //thread::sleep(eighty_millis);
         input.set_direction(Direction::In)?;
         input.set_edge(Edge::FallingEdge)?;
         let mut poller = input.get_poller()?;
         loop {
             match poller.poll(1000)? {
-                Some(value) => println!("{}", button),
-                None => { }
-            }
+                Some(_value) => {
+                    client.press(button_code).call().unwrap()
+                },
+                None => "none".to_string()
+            };
         }
     })
 }
 
 fn main() {
-    println!("{}", "Launched poller");
-    
+
     thread::spawn(move || {
-        let button : String = "left".to_string();
-        match interrupt(485, button) {
+        // center joystick
+        let button_code : u8 = 0;
+        match interrupt(462, button_code) {
             Ok(()) => println!("Interrupting Complete!"),
             Err(err) => println!("Error: {}", err),
         }
     });
     
     thread::spawn(move || {
-        let button : String = "right".to_string();
-        match interrupt(481, button) {
+        // left joystick
+        let button_code : u8 = 1;
+        match interrupt(485, button_code) {
             Ok(()) => println!("Interrupting Complete!"),
             Err(err) => println!("Error: {}", err),
         }
     });
     
     thread::spawn(move || {
-        let button : String = "up".to_string();
-        match interrupt(475, button) {
+        // right joystick
+        let button_code : u8 = 2;
+        match interrupt(481, button_code) {
             Ok(()) => println!("Interrupting Complete!"),
             Err(err) => println!("Error: {}", err),
         }
     });
     
     thread::spawn(move || {
-        let button : String = "down".to_string();
-        match interrupt(480, button) {
+        // up joystick
+        let button_code : u8 = 3;
+        match interrupt(475, button_code) {
             Ok(()) => println!("Interrupting Complete!"),
             Err(err) => println!("Error: {}", err),
         }
     });
     
     thread::spawn(move || {
-        let button : String = "center".to_string();
-        match interrupt(462, button) {
+        // down joystick
+        let button_code : u8 = 4;
+        match interrupt(480, button_code) {
             Ok(()) => println!("Interrupting Complete!"),
             Err(err) => println!("Error: {}", err),
         }
     });
-        
+    
     thread::spawn(move || {
-        let button : String = "A".to_string();
-        match interrupt(463, button) {
+        // A button (#5)
+        let button_code : u8 = 5;
+        match interrupt(463, button_code) {
             Ok(()) => println!("Interrupting Complete!"),
             Err(err) => println!("Error: {}", err),
         }
     });
 
-    let button : String = "B".to_string();
-    match interrupt(464, button) {
+    // B button (#6)
+    let button_code : u8 = 6;
+    match interrupt(464, button_code) {
         Ok(()) => println!("Interrupting Complete!"),
         Err(err) => println!("Error: {}", err),
     }
