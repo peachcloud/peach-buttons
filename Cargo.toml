@@ -6,5 +6,7 @@ edition = "2018"
 
 [dependencies]
 sysfs_gpio = "0.5.3"
-jsonrpc-client-core = "0.5.0"
-jsonrpc-client-http = "0.5.0"
+jsonrpc-core = "11.0.0"
+jsonrpc-tcp-server = "11.0.0"
+jsonrpc-pubsub = "11.0.0"
+crossbeam-channel = "0.3"
