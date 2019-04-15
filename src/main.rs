@@ -4,15 +4,15 @@ extern crate sysfs_gpio;
 use std::sync::Arc;
 use std::thread;
 
+use sysfs_gpio::{Direction, Edge, Pin};
+
 use jsonrpc_core::futures::Future;
 use jsonrpc_core::*;
 use jsonrpc_pubsub::{PubSubHandler, Session, Subscriber, SubscriptionId};
-use jsonrpc_tcp_server::{RequestContext, ServerBuilder};
+use jsonrpc_ws_server::{RequestContext, ServerBuilder};
 
 use crossbeam_channel::unbounded;
 use crossbeam_channel::Sender;
-
-use sysfs_gpio::{Direction, Edge, Pin};
 
 // initialize gpio pin and poller
 // send button code to "subscribe_buttons" rpc method for sink notification
@@ -96,6 +96,8 @@ fn main() {
                     return;
                 }
 
+                // useful for debugging: subscription request received
+                println!("{:}", "Subscription event".to_string());
                 let r1 = r1.clone();
                 thread::spawn(move || {
                     let sink = subscriber
@@ -127,11 +129,12 @@ fn main() {
         }),
     );
 
+    // build the json-rpc-over-websockets server
     let server = ServerBuilder::with_meta_extractor(io, |context: &RequestContext| {
-        Arc::new(Session::new(context.sender.clone()))
+        Arc::new(Session::new(context.sender().clone()))
     })
     .start(&"127.0.0.1:3030".parse().unwrap())
     .expect("Unable to start RPC server");
 
-    server.wait();
+    server.wait().unwrap();
 }
