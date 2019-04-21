@@ -4,7 +4,7 @@ GPIO microservice module for handling button presses. `peach-buttons` implements
 
 In the intended implementation of PeachCloud, `peach-menu` will subscribe to `peach-buttons` events.
 
-_Note: This module is a work-in-progress. Buttons need debouncing._
+_Note: This module is a work-in-progress._
 
 ### Pin to Button to Button Code Mappings
 
@@ -37,7 +37,8 @@ Run the binary with sudo:
 
 ### Testing Subscription
 
-`netcat localhost 3030 -`  
+Request:
+  
 `{"id":1,"jsonrpc":"2.0","method":"subscribe_buttons"}`
 
 Response:

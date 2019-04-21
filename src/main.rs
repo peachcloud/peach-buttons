@@ -3,6 +3,7 @@ extern crate sysfs_gpio;
 
 use std::sync::Arc;
 use std::thread;
+use std::time::{Duration, Instant};
 
 use sysfs_gpio::{Direction, Edge, Pin};
 
@@ -23,10 +24,19 @@ fn interrupt(pin: u64, button_code: u8, s: Sender<u8>) -> sysfs_gpio::Result<()>
         input.set_edge(Edge::FallingEdge)?;
         let mut poller = input.get_poller()?;
         loop {
-            // needs debounce logic!
+            let mut start = Instant::now();
             match poller.poll(1000)? {
-                Some(_value) => s.send(button_code).unwrap(),
-                None => (), //return //println!("{:}", "".to_string())
+                Some(_value) => {
+                    let debounce_ms = Duration::from_millis(200);
+                    let interrupt_time = Instant::now();
+                    if interrupt_time.duration_since(start) > debounce_ms {
+                        s.send(button_code).unwrap();
+                        let start = interrupt_time;
+                    } else {
+                        ()
+                    }
+                }
+                None => (),
             };
         }
     })
@@ -96,8 +106,6 @@ fn main() {
                     return;
                 }
 
-                // useful for debugging: subscription request received
-                println!("{:}", "Subscription event".to_string());
                 let r1 = r1.clone();
                 thread::spawn(move || {
                     let sink = subscriber
@@ -115,7 +123,7 @@ fn main() {
                         {
                             Ok(_) => {}
                             Err(_) => {
-                                println!("Subscription has ended, finishing.");
+                                // subscription terminated due to error
                                 break;
                             }
                         }
@@ -124,7 +132,7 @@ fn main() {
             },
         ),
         ("remove_buttons", |_id: SubscriptionId, _| {
-            println!("Closing subscription");
+            // unsubscribe
             futures::future::ok(Value::Bool(true))
         }),
     );
