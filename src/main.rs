@@ -1,5 +1,3 @@
-#![feature(integer_atomics)]
-
 extern crate crossbeam_channel;
 extern crate gpio_cdev;
 
@@ -22,7 +20,7 @@ fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Sender<u
     thread::spawn(move || {
         let mut chip = Chip::new("/dev/gpiochip0").unwrap();
         let input = chip.get_line(pin).unwrap();
-        
+    
         for _event in input.events(
             LineRequestFlags::INPUT,
             EventRequestFlags::FALLING_EDGE,
