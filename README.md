@@ -9,16 +9,16 @@ _Note: This module is a work-in-progress._
 ### Pin to Button to Button Code Mappings
 
 ```
-462 => Center => 0,
-485 => Left => 1,
-481 => Right => 2,
-475 => Up => 3,
-480 => Down => 4,
-463 => A => 5,
-464 => B => 6
+4 => Center => 0,
+27 => Left => 1,
+23 => Right => 2,
+17 => Up => 3,
+22 => Down => 4,
+5 => A => 5,
+6 => B => 6
 ```
 
-_Note: Pin numbers are offset by 458 for Debian on RPi3._
+_Note: `peach-buttons` utilizes the GPIO character device ABI. This API, stabilized with Linux v4.4, deprecates the legacy sysfs interface to GPIOs that is planned to be removed from the upstream kernel after year 2020._
 
 ### Setup
 
