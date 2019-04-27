@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate crossbeam_channel;
 extern crate gpio_cdev;
 
@@ -18,24 +21,36 @@ use crossbeam_channel::Sender;
 // send button code to "subscribe_buttons" rpc method for sink notification
 fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Sender<u8>) {
     thread::spawn(move || {
+        debug!("Creating handle for GPIO chip.");
         let mut chip = Chip::new("/dev/gpiochip0").unwrap();
+
+        debug!("Creating handle for GPIO line at given pin.");
         let input = chip.get_line(pin).unwrap();
     
+        info!("Listening for line events on pin: {}", pin);
         for _event in input.events(
             LineRequestFlags::INPUT,
             EventRequestFlags::FALLING_EDGE,
             &button_name
         ).unwrap() {
+            debug!("Sending button code to publisher: {}", &button_code);
             s.send(button_code).unwrap();
         }
     });
 }        
 
 fn main() {
+    // initialize the logger
+    env_logger::init();
+
+    info!("Starting up.");
+
+    debug!("Creating channel for message passing.");
     // create channel for message passing
     let (s, r) = unbounded();
     let (s1, r1) = (s.clone(), r.clone());
 
+    debug!("Setting up interrupt handlers.");
     // center joystick
     interrupt_handler(4, 0, "center".to_string(), s1);
 
@@ -69,6 +84,7 @@ fn main() {
     // B `#6`
     interrupt_handler(6, 6, "#6".to_string(), s1);
 
+    debug!("Creating pub-sub handler.");
     let mut io = PubSubHandler::new(MetaIoHandler::default());
 
     io.add_subscription(
@@ -77,6 +93,7 @@ fn main() {
             "subscribe_buttons",
             move |params: Params, _, subscriber: Subscriber| {
                 if params != Params::None {
+                    debug!("Received subscription request.");
                     subscriber
                         .reject(Error {
                             code: ErrorCode::ParseError,
@@ -94,17 +111,22 @@ fn main() {
                         .wait()
                         .unwrap();
 
+                    info!("Listening for button code from gpio events.");
                     loop {
                         // listen for gpio interrupt event message
                         let button_code: u8 = r1.recv().unwrap();
+                        info!("Received button code: {}.", button_code);
                         // emit button_code to subscriber
                         match sink
                             .notify(Params::Array(vec![Value::Number(button_code.into())]))
                             .wait()
                         {
-                            Ok(_) => {}
+                            Ok(_) => {
+                                info!("Publishing button code to subscriber over ws.");
+                            }
                             Err(_) => {
                                 // subscription terminated due to error
+                                warn!("Failed to publish button code.");
                                 break;
                             }
                         }
@@ -118,6 +140,7 @@ fn main() {
         }),
     );
 
+    info!("Creating JSON-RPC server.");
     // build the json-rpc-over-websockets server
     let server = ServerBuilder::with_meta_extractor(io, |context: &RequestContext| {
         Arc::new(Session::new(context.sender().clone()))
@@ -125,5 +148,6 @@ fn main() {
     .start(&"127.0.0.1:3030".parse().unwrap())
     .expect("Unable to start RPC server");
 
+    info!("Listening for requests.");
     server.wait().unwrap();
 }
