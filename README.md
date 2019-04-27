@@ -35,7 +35,7 @@ Run the binary with sudo:
 
 `sudo ./target/debug/peach-buttons`
 
-Logging is also made availabe with `env_logger`:
+Logging is made availabe with `env_logger`:
 
 `sudo RUST_LOG=info ./target/debug/peach-buttons`
 
