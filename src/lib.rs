@@ -1,6 +1,5 @@
 #[macro_use]
 pub extern crate log;
-extern crate env_logger;
 extern crate crossbeam_channel;
 extern crate gpio_cdev;
 
