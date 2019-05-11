@@ -15,6 +15,8 @@ use jsonrpc_core::futures::Future;
 use jsonrpc_core::*;
 use jsonrpc_pubsub::{PubSubHandler, Session, Subscriber, SubscriptionId};
 use jsonrpc_ws_server::{RequestContext, ServerBuilder};
+#[allow(unused_imports)]
+use jsonrpc_test as test;
 
 use crossbeam_channel::unbounded;
 use crossbeam_channel::Sender;
@@ -160,4 +162,22 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     server.wait().unwrap();
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rpc_success() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_success_response", |_| {
+                Ok(Value::String("success".into()))
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(rpc.request("rpc_success_response", &()), r#""success""#);
+    }
 }
