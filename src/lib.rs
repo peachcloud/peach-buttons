@@ -3,23 +3,24 @@ pub extern crate log;
 extern crate crossbeam_channel;
 extern crate gpio_cdev;
 
-use std::thread;
+use std::error;
 use std::process;
-use std::sync::Arc;
-use std::error::Error;
 use std::result::Result;
+use std::sync::Arc;
+use std::thread;
 
-use gpio_cdev::*;
+use gpio_cdev::{Chip, EventRequestFlags, LineRequestFlags};
 
 use jsonrpc_core::futures::Future;
-use jsonrpc_core::*;
+use jsonrpc_core::{ErrorCode, *};
 use jsonrpc_pubsub::{PubSubHandler, Session, Subscriber, SubscriptionId};
-use jsonrpc_ws_server::{RequestContext, ServerBuilder};
 #[allow(unused_imports)]
 use jsonrpc_test as test;
+use jsonrpc_ws_server::{RequestContext, ServerBuilder};
 
-use crossbeam_channel::unbounded;
-use crossbeam_channel::Sender;
+use crossbeam_channel::{unbounded, Sender};
+
+pub type BoxError = Box<dyn error::Error>;
 
 // initialize gpio pin and listen for line events
 // send button code to "subscribe_buttons" rpc method for sink notification
@@ -27,34 +28,46 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
     thread::spawn(move || {
         debug!("Creating handle for GPIO chip.");
         let mut chip = Chip::new("/dev/gpiochip0").unwrap_or_else(|err| {
-            error!("Problem creating handle for GPIO chip: {}", err);
+            error!("Failed to create handle for GPIO chip: {}", err);
             process::exit(1);
         });
 
         debug!("Creating handle for GPIO line at given pin.");
         let input = chip.get_line(pin).unwrap_or_else(|err| {
-            error!("Problem creating handle for GPIO line: {}", err);
+            error!(
+                "Failed to create handle for GPIO line at pin {}: {}",
+                pin, err
+            );
             process::exit(1);
         });
-    
+
         info!("Listening for line events on pin: {}", pin);
-        for _event in input.events(
-            LineRequestFlags::INPUT,
-            EventRequestFlags::FALLING_EDGE,
-            &button_name
-        ).unwrap() {
+        for _event in input
+            .events(
+                LineRequestFlags::INPUT,
+                EventRequestFlags::FALLING_EDGE,
+                &button_name,
+            )
+            .unwrap_or_else(|err| {
+                error!("Failed to create handle for line events: {}", err);
+                process::exit(1);
+            })
+        {
             debug!("Sending button code to publisher: {}", &button_code);
             s.send(button_code).unwrap_or_else(|err| {
-                error!("Problem sending button code to publisher: {}", err);
+                error!(
+                    "Failed to send message because the channel is disconnected: {}",
+                    err
+                );
                 process::exit(1);
             });
         }
     });
-}        
+}
 
-pub fn run() -> Result<(), Box<dyn Error>> {
+pub fn run() -> Result<(), BoxError> {
     info!("Starting up.");
-    
+
     debug!("Creating channel for message passing.");
     // create channel for message passing
     let (s, r) = unbounded();
@@ -110,7 +123,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                             message: "Invalid parameters. Subscription rejected".into(),
                             data: None,
                         })
-                        .unwrap();
+                        .unwrap_or_else(|_| {
+                            error!("Failed to send rejection error for subscription request");
+                        });
                     return;
                 }
 

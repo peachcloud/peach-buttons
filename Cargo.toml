@@ -5,7 +5,7 @@ authors = ["Andrew Reid <gnomad@cryptolab.net>"]
 edition = "2018"
 
 [dependencies]
-gpio-cdev = "0.1"
+gpio-cdev = "0.2.0"
 jsonrpc-core = "11.0.0"
 jsonrpc-ws-server = "11.0.0"
 jsonrpc-pubsub = "11.0.0"
