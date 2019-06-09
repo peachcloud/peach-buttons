@@ -120,11 +120,11 @@ pub fn run() -> Result<(), BoxError> {
                     subscriber
                         .reject(jsonrpc_core::Error {
                             code: ErrorCode::ParseError,
-                            message: "Invalid parameters. Subscription rejected".into(),
+                            message: "Invalid parameters. Subscription rejected.".to_string(),
                             data: None,
                         })
                         .unwrap_or_else(|_| {
-                            error!("Failed to send rejection error for subscription request");
+                            error!("Failed to send rejection error for subscription request.");
                         });
                     return;
                 }
