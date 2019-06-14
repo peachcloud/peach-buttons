@@ -1,11 +1,12 @@
 #[macro_use]
 pub extern crate log;
 extern crate crossbeam_channel;
+extern crate crossbeam_utils;
 extern crate gpio_cdev;
 
-use std::{error, process, result::Result, sync::Arc, thread};
+use std::{error, process, result::Result, sync::Arc, thread, time::Duration};
 
-use gpio_cdev::{Chip, EventRequestFlags, LineRequestFlags};
+use gpio_cdev::{Chip, LineRequestFlags};
 
 use jsonrpc_core::futures::Future;
 use jsonrpc_core::{ErrorCode, *};
@@ -14,7 +15,8 @@ use jsonrpc_pubsub::{PubSubHandler, Session, Subscriber, SubscriptionId};
 use jsonrpc_test as test;
 use jsonrpc_ws_server::{RequestContext, ServerBuilder};
 
-use crossbeam_channel::{unbounded, Sender};
+use crossbeam_channel::{bounded, tick, Sender};
+use crossbeam_utils::atomic::AtomicCell;
 
 pub type BoxError = Box<dyn error::Error>;
 
@@ -37,25 +39,27 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
             process::exit(1);
         });
 
-        info!("Listening for line events on pin: {}", pin);
-        for _event in input
-            .events(
-                LineRequestFlags::INPUT,
-                EventRequestFlags::FALLING_EDGE,
-                &button_name,
-            )
-            .unwrap_or_else(|err| {
-                error!("Failed to create handle for line events: {}", err);
-                process::exit(1);
-            })
-        {
-            debug!("Sending button code to publisher: {}", &button_code);
-            s.send(button_code).unwrap_or_else(|err| {
-                error!(
-                    "Failed to send message because the channel is disconnected: {}",
-                    err
-                );
-            });
+        let line_handle = input
+            .request(LineRequestFlags::INPUT, 0, &button_name)
+            .unwrap();
+
+        let ticker = tick(Duration::from_millis(1));
+        let mut counter = AtomicCell::new(0);
+
+        info!(
+            "Initating polling loop for {} button on pin {}",
+            button_name, pin
+        );
+        loop {
+            ticker.recv().unwrap();
+            let value = line_handle.get_value().unwrap();
+            match value {
+                0 => counter.store(0),
+                _ => *counter.get_mut() += 1,
+            }
+            if let 10 = counter.load() {
+                s.send(button_code).unwrap()
+            }
         }
     });
 }
@@ -65,7 +69,7 @@ pub fn run() -> Result<(), BoxError> {
 
     debug!("Creating channel for message passing.");
     // create channel for message passing
-    let (s, r) = unbounded();
+    let (s, r) = bounded(0);
     let (s1, r1) = (s.clone(), r.clone());
 
     debug!("Setting up interrupt handlers.");
