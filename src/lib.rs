@@ -3,11 +3,7 @@ pub extern crate log;
 extern crate crossbeam_channel;
 extern crate gpio_cdev;
 
-use std::error;
-use std::process;
-use std::result::Result;
-use std::sync::Arc;
-use std::thread;
+use std::{error, process, result::Result, sync::Arc, thread};
 
 use gpio_cdev::{Chip, EventRequestFlags, LineRequestFlags};
 
@@ -59,7 +55,6 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
                     "Failed to send message because the channel is disconnected: {}",
                     err
                 );
-                process::exit(1);
             });
         }
     });
