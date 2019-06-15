@@ -20,7 +20,7 @@ use crossbeam_utils::atomic::AtomicCell;
 
 pub type BoxError = Box<dyn error::Error>;
 
-// initialize gpio pin and listen for line events
+// initialize gpio pin and poll for state (debounced 1ms)
 // send button code to "subscribe_buttons" rpc method for sink notification
 pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Sender<u8>) {
     thread::spawn(move || {
@@ -41,7 +41,10 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
 
         let line_handle = input
             .request(LineRequestFlags::INPUT, 0, &button_name)
-            .unwrap();
+            .unwrap_or_else(|err| {
+                error!("Failed to gain kernel access for pin {}: {}", pin, err);
+                process::exit(1);
+            });
 
         let ticker = tick(Duration::from_millis(1));
         let mut counter = AtomicCell::new(0);
@@ -58,7 +61,9 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
                 _ => *counter.get_mut() += 1,
             }
             if let 10 = counter.load() {
-                s.send(button_code).unwrap()
+                s.send(button_code).unwrap_or_else(|err| {
+                    error!("Failed to send button_code to publisher: {}", err);
+                });
             }
         }
     });
@@ -114,8 +119,8 @@ pub fn run() -> Result<(), BoxError> {
         (
             "subscribe_buttons",
             move |params: Params, _, subscriber: Subscriber| {
+                debug!("Received subscription request.");
                 if params != Params::None {
-                    debug!("Received subscription request.");
                     subscriber
                         .reject(jsonrpc_core::Error {
                             code: ErrorCode::ParseError,
