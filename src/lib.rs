@@ -4,7 +4,7 @@ extern crate crossbeam_channel;
 extern crate crossbeam_utils;
 extern crate gpio_cdev;
 
-use std::{error, process, result::Result, sync::Arc, thread, time::Duration};
+use std::{env, error, process, result::Result, sync::Arc, thread, time::Duration};
 
 use gpio_cdev::{Chip, LineRequestFlags};
 
@@ -169,12 +169,19 @@ pub fn run() -> Result<(), BoxError> {
         }),
     );
 
-    info!("Creating JSON-RPC server.");
+    let ws_server =
+        env::var("PEACH_BUTTONS_SERVER").unwrap_or_else(|_| "127.0.0.1:5111".to_string());
+
+    info!("Starting JSON-RPC server on {}.", ws_server);
     // build the json-rpc-over-websockets server
     let server = ServerBuilder::with_meta_extractor(io, |context: &RequestContext| {
         Arc::new(Session::new(context.sender().clone()))
     })
-    .start(&"127.0.0.1:3030".parse().unwrap())
+    .start(
+        &ws_server
+            .parse()
+            .expect("Invalid WS address and port combination"),
+    )
     .expect("Unable to start RPC server");
 
     info!("Listening for requests.");

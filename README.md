@@ -22,6 +22,20 @@ _Note: This module is a work-in-progress._
 
 _Note: `peach-buttons` utilizes the GPIO character device ABI. This API, stabilized with Linux v4.4, deprecates the legacy sysfs interface to GPIOs that is planned to be removed from the upstream kernel after year 2020._
 
+### Environment
+
+The JSON-RPC WS server address and port can be configured with the `PEACH_BUTTONS_SERVER` environment variable:
+
+`export PEACH_BUTTONS_SERVER=127.0.0.1:5000`
+
+When not set, the value defaults to `127.0.0.1:5111`.
+
+Logging is made availabe with `env_logger`:
+
+`export RUST_LOG=info`
+
+Other logging levels include `debug`, `warn` and `error`.
+
 ### Setup
 
 Clone this repo:
@@ -36,12 +50,6 @@ Move into the repo and compile:
 Run the binary with sudo:
 
 `sudo ./target/debug/peach-buttons`
-
-Logging is made availabe with `env_logger`:
-
-`sudo RUST_LOG=info ./target/debug/peach-buttons`
-
-_Other logging levels include debug, warn and error._
 
 ### Testing Subscription
 
