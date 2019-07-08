@@ -1,10 +1,9 @@
 #[macro_use]
 pub extern crate log;
 extern crate crossbeam_channel;
-extern crate crossbeam_utils;
 extern crate gpio_cdev;
 
-use std::{env, error, process, result::Result, sync::Arc, thread, time::Duration};
+use std::{cell::Cell, env, error, process, result::Result, sync::Arc, thread, time::Duration};
 
 use gpio_cdev::{Chip, LineRequestFlags};
 
@@ -16,7 +15,6 @@ use jsonrpc_test as test;
 use jsonrpc_ws_server::{RequestContext, ServerBuilder};
 
 use crossbeam_channel::{bounded, tick, Sender};
-use crossbeam_utils::atomic::AtomicCell;
 
 pub type BoxError = Box<dyn error::Error>;
 
@@ -47,7 +45,7 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
             });
 
         let ticker = tick(Duration::from_millis(1));
-        let mut counter = AtomicCell::new(0);
+        let mut counter = Cell::new(0);
 
         info!(
             "Initating polling loop for {} button on pin {}",
@@ -57,10 +55,12 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
             ticker.recv().unwrap();
             let value = line_handle.get_value().unwrap();
             match value {
-                0 => counter.store(0),
-                _ => *counter.get_mut() += 1,
+                0 => counter.set(0),
+                1 => *counter.get_mut() += 1,
+                _ => (),
             }
-            if let 10 = counter.load() {
+            if let 10 = counter.get() {
+                debug!("Sending button code: {}", button_code);
                 s.send(button_code).unwrap_or_else(|err| {
                     error!("Failed to send button_code to publisher: {}", err);
                 });
@@ -75,41 +75,28 @@ pub fn run() -> Result<(), BoxError> {
     debug!("Creating channel for message passing.");
     // create channel for message passing
     let (s, r) = bounded(0);
-    let (s1, r1) = (s.clone(), r.clone());
 
     debug!("Setting up interrupt handlers.");
     // center joystick
-    interrupt_handler(4, 0, "center".to_string(), s1);
-
-    let s1 = s.clone();
+    interrupt_handler(4, 0, "center".to_string(), s.clone());
 
     // left joystick
-    interrupt_handler(27, 1, "left".to_string(), s1);
-
-    let s1 = s.clone();
+    interrupt_handler(27, 1, "left".to_string(), s.clone());
 
     // right joystick
-    interrupt_handler(23, 2, "right".to_string(), s1);
-
-    let s1 = s.clone();
+    interrupt_handler(23, 2, "right".to_string(), s.clone());
 
     // up joystick
-    interrupt_handler(17, 3, "up".to_string(), s1);
-
-    let s1 = s.clone();
+    interrupt_handler(17, 3, "up".to_string(), s.clone());
 
     // down joystick
-    interrupt_handler(22, 4, "down".to_string(), s1);
-
-    let s1 = s.clone();
+    interrupt_handler(22, 4, "down".to_string(), s.clone());
 
     // A `#5`
-    interrupt_handler(5, 5, "#5".to_string(), s1);
-
-    let s1 = s.clone();
+    interrupt_handler(5, 5, "#5".to_string(), s.clone());
 
     // B `#6`
-    interrupt_handler(6, 6, "#6".to_string(), s1);
+    interrupt_handler(6, 6, "#6".to_string(), s.clone());
 
     debug!("Creating pub-sub handler.");
     let mut io = PubSubHandler::new(MetaIoHandler::default());
@@ -133,7 +120,8 @@ pub fn run() -> Result<(), BoxError> {
                     return;
                 }
 
-                let r1 = r1.clone();
+                let r1 = r.clone();
+
                 thread::spawn(move || {
                     let sink = subscriber
                         .assign_id_async(SubscriptionId::Number(1))
