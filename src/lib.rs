@@ -44,8 +44,9 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
                 process::exit(1);
             });
 
-        let ticker = tick(Duration::from_millis(1));
+        let ticker = tick(Duration::from_millis(2));
         let mut counter = Cell::new(0);
+        let mut switch = Cell::new(0);
 
         info!(
             "Initating polling loop for {} button on pin {}",
@@ -59,11 +60,15 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
                 1 => *counter.get_mut() += 1,
                 _ => (),
             }
-            if let 10 = counter.get() {
-                debug!("Sending button code: {}", button_code);
-                s.send(button_code).unwrap_or_else(|err| {
-                    error!("Failed to send button_code to publisher: {}", err);
-                });
+            if counter.get() == 10 {
+                if switch.get() == 0 {
+                    *switch.get_mut() += 1
+                } else {
+                    debug!("Sending button code: {}", button_code);
+                    s.send(button_code).unwrap_or_else(|err| {
+                        error!("Failed to send button_code to publisher: {}", err);
+                    });
+                }
             }
         }
     });
