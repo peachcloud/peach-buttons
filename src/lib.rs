@@ -3,20 +3,20 @@ pub extern crate log;
 extern crate crossbeam_channel;
 extern crate gpio_cdev;
 
-use std::{cell::Cell, env, error, process, result::Result, sync::Arc, thread, time::Duration};
+mod error;
 
+use std::{cell::Cell, env, process, result::Result, sync::Arc, thread, time::Duration};
+
+use crossbeam_channel::{bounded, tick, Sender};
 use gpio_cdev::{Chip, LineRequestFlags};
-
 use jsonrpc_core::futures::Future;
-use jsonrpc_core::{ErrorCode, *};
+use jsonrpc_core::*;
 use jsonrpc_pubsub::{PubSubHandler, Session, Subscriber, SubscriptionId};
 #[allow(unused_imports)]
 use jsonrpc_test as test;
 use jsonrpc_ws_server::{RequestContext, ServerBuilder};
 
-use crossbeam_channel::{bounded, tick, Sender};
-
-pub type BoxError = Box<dyn error::Error>;
+use crate::error::{BoxError, ButtonError::RejectSubscription};
 
 // initialize gpio pin and poll for state (debounced 1ms)
 // send button code to "subscribe_buttons" rpc method for sink notification
@@ -114,11 +114,7 @@ pub fn run() -> Result<(), BoxError> {
                 debug!("Received subscription request.");
                 if params != Params::None {
                     subscriber
-                        .reject(jsonrpc_core::Error {
-                            code: ErrorCode::ParseError,
-                            message: "Invalid parameters. Subscription rejected.".to_string(),
-                            data: None,
-                        })
+                        .reject(Error::from(RejectSubscription))
                         .unwrap_or_else(|_| {
                             error!("Failed to send rejection error for subscription request.");
                         });
@@ -135,19 +131,14 @@ pub fn run() -> Result<(), BoxError> {
 
                     info!("Listening for button code from gpio events.");
                     loop {
-                        // listen for gpio interrupt event message
                         let button_code: u8 = r1.recv().unwrap();
                         info!("Received button code: {}.", button_code);
-                        // emit button_code to subscriber
                         match sink
                             .notify(Params::Array(vec![Value::Number(button_code.into())]))
                             .wait()
                         {
-                            Ok(_) => {
-                                info!("Publishing button code to subscriber over ws.");
-                            }
+                            Ok(_) => info!("Publishing button code to subscriber over ws."),
                             Err(_) => {
-                                // subscription terminated due to error
                                 warn!("Failed to publish button code.");
                                 break;
                             }
@@ -166,7 +157,6 @@ pub fn run() -> Result<(), BoxError> {
         env::var("PEACH_BUTTONS_SERVER").unwrap_or_else(|_| "127.0.0.1:5111".to_string());
 
     info!("Starting JSON-RPC server on {}.", ws_server);
-    // build the json-rpc-over-websockets server
     let server = ServerBuilder::with_meta_extractor(io, |context: &RequestContext| {
         Arc::new(Session::new(context.sender().clone()))
     })
