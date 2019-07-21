@@ -39,7 +39,9 @@ pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Send
         );
         loop {
             ticker.recv().unwrap();
-            let value = line_handle.get_value().unwrap();
+            let value = line_handle
+                .get_value()
+                .expect("Failed to get current state of this line from the kernel");
             match value {
                 0 => counter.set(0),
                 1 => *counter.get_mut() += 1,
