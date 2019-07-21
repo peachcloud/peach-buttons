@@ -23,30 +23,16 @@ pub fn run() -> Result<(), BoxError> {
     info!("Starting up.");
 
     debug!("Creating channel for message passing.");
-    // create channel for message passing
     let (s, r) = bounded(0);
 
+    let pin = vec![4, 27, 23, 17, 22, 5, 6];
+    let code = vec![0, 1, 2, 3, 4, 5, 6];
+    let name = vec!["center", "left", "right", "up", "down", "#5", "#6"];
+
     debug!("Setting up interrupt handlers.");
-    // center joystick
-    interrupt_handler(4, 0, "center".to_string(), s.clone());
-
-    // left joystick
-    interrupt_handler(27, 1, "left".to_string(), s.clone());
-
-    // right joystick
-    interrupt_handler(23, 2, "right".to_string(), s.clone());
-
-    // up joystick
-    interrupt_handler(17, 3, "up".to_string(), s.clone());
-
-    // down joystick
-    interrupt_handler(22, 4, "down".to_string(), s.clone());
-
-    // A `#5`
-    interrupt_handler(5, 5, "#5".to_string(), s.clone());
-
-    // B `#6`
-    interrupt_handler(6, 6, "#6".to_string(), s.clone());
+    for i in 0..6 {
+        interrupt_handler(pin[i], code[i], name[i].to_string(), s.clone());
+    }
 
     debug!("Creating pub-sub handler.");
     let mut io = PubSubHandler::new(MetaIoHandler::default());

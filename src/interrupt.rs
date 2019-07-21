@@ -1,12 +1,9 @@
-extern crate crossbeam_channel;
-extern crate gpio_cdev;
-
 use std::{cell::Cell, process, thread, time::Duration};
 
 use crossbeam_channel::{tick, Sender};
 use gpio_cdev::{Chip, LineRequestFlags};
 
-// initialize gpio pin and poll for state (debounced 1ms)
+// initialize gpio pin and poll for state
 // send button code to "subscribe_buttons" rpc method for sink notification
 pub fn interrupt_handler(pin: u32, button_code: u8, button_name: String, s: Sender<u8>) {
     thread::spawn(move || {
