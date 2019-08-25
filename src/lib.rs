@@ -30,7 +30,7 @@ pub fn run() -> Result<(), BoxError> {
     let name = vec!["center", "left", "right", "up", "down", "#5", "#6"];
 
     debug!("Setting up interrupt handlers.");
-    for i in 0..6 {
+    for i in 0..7 {
         interrupt_handler(pin[i], code[i], name[i].to_string(), s.clone());
     }
 
