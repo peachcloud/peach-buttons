@@ -89,7 +89,7 @@ pub fn run() -> Result<(), BoxError> {
 
     info!("Starting JSON-RPC server on {}.", ws_server);
     let server = ServerBuilder::with_meta_extractor(io, |context: &RequestContext| {
-        Arc::new(Session::new(context.sender().clone()))
+        Arc::new(Session::new(context.sender()))
     })
     .start(
         &ws_server
