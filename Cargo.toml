@@ -3,7 +3,7 @@ name = "peach-buttons"
 version = "0.1.0"
 authors = ["Andrew Reid <gnomad@cryptolab.net>"]
 edition = "2018"
-description = "GPIO microservice module for handling button presses. peach-buttons implements a JSON-RPC server with Publish-Subscribe extension. Each button press results in a JSON-RPC request being sent over websockets to any subscribers. A button code for the pressed button is sent with the request to subscribers, allowing state-specific actions to be taken."
+description = "peach-buttons is a GPIO microservice for handling button presses, implementing a JSON-RPC server with Publish-Subscribe extension. Each button press results in a JSON-RPC request being sent over websockets to any subscribers. A button code for the pressed button is sent with the request to subscribers, allowing state-specific actions to be taken."
 homepage = "https://opencollective.com/peachcloud"
 repository = "https://github.com/peachcloud/peach-buttons"
 readme = "README.md"
@@ -12,6 +12,11 @@ publish = false
 
 [package.metadata.deb]
 depends = "$auto"
+extended-description = """\
+peach-buttons is a GPIO microservice for handling button presses, \
+implementing a JSON-RPC server with Publish-Subscribe extention. \
+Each button press results in a JSON-RPC request being sent over websockets \
+to any subscribers."""
 assets = [
     ["target/release/peach-buttons", "usr/bin/", "755"],
     ["README.md", "usr/share/doc/peach-buttons/README", "644"],
