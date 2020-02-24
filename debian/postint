@@ -1,10 +1,10 @@
 #!/bin/sh
 
 # This will only remove masks created by d-s-h on package removal.
-deb-systemd-helper unmask snips-dialogue.service > /dev/null || true
+deb-systemd-helper unmask peach-buttons.service > /dev/null || true
 
 # was-enabled defaults to true, so new installations run enable.
-if deb-systemd-helper --quiet was-enabled snips-dialogue.service
+if deb-systemd-helper --quiet was-enabled peach-buttons.service
 then
 	# Enables the unit on first installation, creates new
 	# symlinks on upgrades if the unit file has changed.
