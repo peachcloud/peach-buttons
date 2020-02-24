@@ -10,6 +10,13 @@ readme = "README.md"
 license = "AGPL-3.0-only"
 publish = false
 
+[package.metadata.deb]
+depends = "$auto"
+assets = [
+    ["target/release/peach-buttons", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/peach-buttons/README", "644"],
+]
+
 [badges]
 travis-ci = { repository = "peachcloud/peach-buttons", branch = "master" }
 maintenance = { status = "actively-developed" }
