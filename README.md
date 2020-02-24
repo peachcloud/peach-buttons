@@ -51,6 +51,38 @@ Run the binary with sudo:
 
 `sudo ./target/release/peach-buttons`
 
+### Debian Packaging
+
+A `systemd` service file and Debian maintainer scripts are included in the `debian` directory, allowing `peach-buttons` to be easily bundled as a Debian package (`.deb`). The `cargo-deb` [crate](https://crates.io/crates/cargo-deb) can be used to achieve this.
+
+Install `cargo-deb`:
+
+`cargo install cargo-deb`
+
+Move into the repo:
+
+`cd peach-buttons`
+
+Build the package:
+
+`cargo deb`
+
+The output will be written to `target/debian/peach-buttons_0.1.0_arm64.deb` (or similar).
+
+Install the service as follows:
+
+`sudo dpkg -i target/debian/peach-buttons_0.1.0_arm64.deb`
+
+The service will be automatically enabled and started.
+
+Uninstall the service:
+
+`sudo apt-get remove peach-buttons`
+
+Remove configuration files (not removed with `apt-get remove`):
+
+`sudo apt-get purge peach-buttons`
+
 ### Testing Subscription
 
 Request:
