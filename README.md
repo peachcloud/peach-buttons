@@ -69,7 +69,7 @@ Build the package:
 
 The output will be written to `target/debian/peach-buttons_0.1.0_arm64.deb` (or similar).
 
-Install the service as follows:
+Install the package as follows:
 
 `sudo dpkg -i target/debian/peach-buttons_0.1.0_arm64.deb`
 
