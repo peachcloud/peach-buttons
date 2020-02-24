@@ -20,7 +20,7 @@ to any subscribers."""
 maintainer-scripts="debian"
 assets = [
     ["target/release/peach-buttons", "usr/bin/", "755"],
-    ["debian/peach-buttons.service", "/lib/systemd/system/peach-buttons.service", "644"]
+    ["debian/peach-buttons.service", "/lib/systemd/system/peach-buttons.service", "644"],
     ["README.md", "usr/share/doc/peach-buttons/README", "644"],
 ]
 
