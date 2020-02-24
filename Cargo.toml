@@ -17,6 +17,7 @@ peach-buttons is a GPIO microservice for handling button presses, \
 implementing a JSON-RPC server with Publish-Subscribe extention. \
 Each button press results in a JSON-RPC request being sent over websockets \
 to any subscribers."""
+maintainer-scripts="debian"
 assets = [
     ["target/release/peach-buttons", "usr/bin/", "755"],
     ["debian/peach-buttons.service", "/lib/systemd/system/peach-buttons.service", "644"],

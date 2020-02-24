@@ -1,5 +1,5 @@
 [Unit]
-Description=peach-buttons: A GPIO microservice module for handling button presses. Implements a JSON-RPC server with Publish-Subscribe extension.
+Description=peach-buttons: A GPIO microservice module for handling button presses. Implements a JSON-RPC server with Publish-Subscribe extension
 
 [Service]
 Type=simple
@@ -10,4 +10,3 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-
