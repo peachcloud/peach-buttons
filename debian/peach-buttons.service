@@ -5,6 +5,7 @@ Description=GPIO microservice for handling button presses. Implements a JSON-RPC
 Type=simple
 User=root
 Group=root
+Environment="RUST_LOG=error"
 ExecStart=/usr/bin/peach-buttons
 Restart=always
 
