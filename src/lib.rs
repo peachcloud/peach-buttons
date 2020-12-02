@@ -1,8 +1,3 @@
-#[macro_use]
-pub extern crate log;
-extern crate crossbeam_channel;
-extern crate gpio_cdev;
-
 mod error;
 mod interrupt;
 
@@ -15,6 +10,7 @@ use jsonrpc_pubsub::{PubSubHandler, Session, Subscriber, SubscriptionId};
 #[allow(unused_imports)]
 use jsonrpc_test as test;
 use jsonrpc_ws_server::{RequestContext, ServerBuilder};
+use log::{debug, error, info, warn};
 
 use crate::error::{BoxError, ButtonError::RejectSubscription};
 use crate::interrupt::*;
