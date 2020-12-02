@@ -2,6 +2,7 @@ use std::{cell::Cell, process, thread, time::Duration};
 
 use crossbeam_channel::{tick, Sender};
 use gpio_cdev::{Chip, LineRequestFlags};
+use log::{debug, error, info};
 
 // initialize gpio pin and poll for state
 // send button code to "subscribe_buttons" rpc method for sink notification
