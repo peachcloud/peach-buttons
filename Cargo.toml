@@ -1,6 +1,6 @@
 [package]
 name = "peach-buttons"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Andrew Reid <gnomad@cryptolab.net>"]
 edition = "2018"
 description = "peach-buttons is a GPIO microservice for handling button presses, implementing a JSON-RPC server with Publish-Subscribe extension. Each button press results in a JSON-RPC request being sent over websockets to any subscribers. A button code for the pressed button is sent with the request to subscribers, allowing state-specific actions to be taken."
