@@ -29,12 +29,12 @@ travis-ci = { repository = "peachcloud/peach-buttons", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-crossbeam-channel = "0.3"
-env_logger = "0.6.1"
-gpio-cdev = "0.2.0"
-jsonrpc-core = "11.0.0"
-jsonrpc-ws-server = "11.0.0"
-jsonrpc-pubsub = "11.0.0"
-jsonrpc-test = "11.0.0"
-log = "0.4.0"
-snafu = "0.4.1"
+crossbeam-channel = "0.5"
+env_logger = "0.8"
+gpio-cdev = "0.4"
+jsonrpc-core = "15"
+jsonrpc-ws-server = "15"
+jsonrpc-pubsub = "15"
+jsonrpc-test = "15"
+log = "0.4"
+snafu = "0.6"
