@@ -1,3 +1,7 @@
+⚠️ This repo is no longer active and has been archived. The active repo can be found at https://git.coopcloud.tech/PeachCloud/peach-workspace/src/branch/main/peach-buttons ⚠️
+
+-----
+
 # peach-buttons
 
 [![Build Status](https://travis-ci.com/peachcloud/peach-buttons.svg?branch=master)](https://travis-ci.com/peachcloud/peach-buttons) ![Generic badge](https://img.shields.io/badge/version-0.1.3-<COLOR>.svg)
